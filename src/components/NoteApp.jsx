@@ -1,38 +1,68 @@
 import React, { useState } from "react";
-import { Container, Typography } from "@mui/material";
-import Header from "./Header";
-import NoteForm from "./NoteForm";
 import NoteList from "./NoteList";
-import Footer from "./Footer";
+import NoteInput from "./NoteInput";
+import NoteSearch from "./NoteSearch";
+import { getInitialData } from "../utils";
 
-const NoteApp = () => {
-  const [notes, setNotes] = useState([]);
+function NoteApp() {
+  const [notes, setNotes] = useState(getInitialData());
+  const [searchKeyword, setSearchKeyword] = useState("");
 
-  const addNote = (content) => {
-    setNotes([...notes, { id: Date.now(), content }]);
+  const onAddNoteHandler = ({ title, body }) => {
+    setNotes((prevNotes) => [
+      ...prevNotes,
+      {
+        id: +new Date(),
+        title,
+        body,
+        archived: false,
+        createdAt: new Date().toISOString(),
+      },
+    ]);
   };
 
-  const deleteNote = (id) => {
-    setNotes(notes.filter((note) => note.id !== id));
+  const onDeleteHandler = (id) => {
+    setNotes((prevNotes) => prevNotes.filter((note) => note.id !== id));
   };
+
+  const onArchiveHandler = (id) => {
+    setNotes((prevNotes) =>
+      prevNotes.map((note) =>
+        note.id === id ? { ...note, archived: !note.archived } : note
+      )
+    );
+  };
+
+  const onSearchHandler = (keyword) => {
+    setSearchKeyword(keyword);
+  };
+
+  const filteredNotes = notes.filter((note) =>
+    note.title.toLowerCase().includes(searchKeyword.toLowerCase())
+  );
+
+  const activeNotes = filteredNotes.filter((note) => !note.archived);
+  const archivedNotes = filteredNotes.filter((note) => note.archived);
 
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <Header />
-      <Container maxWidth="md" className="flex-grow my-8">
-        <Typography
-          variant="h4"
-          component="h1"
-          className="mb-6 font-bold text-center text-indigo-800"
-        >
-          Catatan Saya
-        </Typography>
-        <NoteForm onAddNote={addNote} />
-        <NoteList notes={notes} onDeleteNote={deleteNote} />
-      </Container>
-      <Footer />
+    <div className="note-app">
+      <h1>Aplikasi Catatan</h1>
+      <NoteSearch searchKeyword={searchKeyword} onSearch={onSearchHandler} />
+      <NoteInput addNote={onAddNoteHandler} />
+      <h2>Catatan Aktif</h2>
+      <NoteList
+        notes={activeNotes}
+        onDelete={onDeleteHandler}
+        onArchive={onArchiveHandler}
+      />
+      <h2>Arsip</h2>
+      <NoteList
+        notes={archivedNotes}
+        onDelete={onDeleteHandler}
+        onArchive={onArchiveHandler}
+      />
     </div>
   );
-};
+}
 
 export default NoteApp;
